@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>tw.lifehackers.alfred.android_dev</string>
+	<key>category</key>
+	<string>Productivity</string>
+	<key>connections</key>
+	<dict>
+		<key>4665CD93-D053-4DE1-8847-F70EC798D171</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>1CAA3DA8-26A9-4897-96E8-8A6B4A139214</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>89DB847B-6175-4F10-9325-F5666D46509F</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D87FFC9C-1861-4AAE-8245-589FE804BF54</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>D87FFC9C-1861-4AAE-8245-589FE804BF54</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>4665CD93-D053-4DE1-8847-F70EC798D171</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Landice</string>
+	<key>description</key>
+	<string>Search classes and articles in Android Developer Website</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Android Developer Website</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>query="{query}"
+echo -n $query | sed -e 's/^open //'</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>4665CD93-D053-4DE1-8847-F70EC798D171</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>68</integer>
+				<key>keyword</key>
+				<string>android</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string></string>
+				<key>script</key>
+				<string># from MacTools import MacTools
+import sys
+import urllib
+from workflow import Workflow3, web
+
+
+class ResultItem:
+    # 2: Article
+    # 3: Class
+    # 4: Search Keyword
+    def __init__(self, result_array):
+        self.type = result_array[4]
+        self.title = result_array[0]
+        self.url = result_array[1]
+        if self.type == 3:
+            self.order = 0
+        elif self.type == 2:
+            self.order = 1
+        elif self.type == 4:
+            self.order = 2
+        else:
+            self.order = 3
+
+
+def get_search_result(wf, keyword):
+    url = "https://developer.android.com/_d/search/suggestions?r=%5B%22" + urllib.quote_plus(keyword) +\
+          "%22%2Cnull%2Cnull%2Cnull%2Cnull%2Ctrue%2Ctrue%2Ctrue%2Ctrue%5D"
+    result = web.get(url).json()
+    return sorted([ResultItem(item) for item in result[1]], key=lambda item: item.order)
+
+
+def main(wf):  # type: (Workflow3) -&gt; None
+    args = wf.args
+    arg_length = len(args)
+    if arg_length == 0 or (arg_length == 1 and args[0] == ''):
+        wf.add_item(
+            title=u'Android Developer', subtitle=u'Open Android Developer Website', valid=True,
+            arg='open https://developer.android.com/'
+        )
+    else:
+        search = " ".join(args)
+        items = get_search_result(wf, search)  # type: [ResultItem]
+        url_encoded_search = urllib.quote_plus(search)
+        for item in items:
+            if item.type == 2:
+                wf.add_item(title=item.title, subtitle=u'Article', valid=True, arg='open ' + item.url)
+            elif item.type == 3:
+                wf.add_item(title=item.title, subtitle=u'Class', valid=True, arg='open ' + item.url)
+            elif item.type == 4:
+                wf.add_item(title=item.title, subtitle=u'Keywords', valid=True, arg='open ' + "https://developer.android.com/s/results/?q=" + url_encoded_search + "&amp;hl=en")
+    wf.send_feedback()
+
+
+if __name__ == '__main__':
+    sys.exit(Workflow3().run(main))
+</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string></string>
+				<key>title</key>
+				<string></string>
+				<key>type</key>
+				<integer>3</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>89DB847B-6175-4F10-9325-F5666D46509F</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>browser</key>
+				<string></string>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>1CAA3DA8-26A9-4897-96E8-8A6B4A139214</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>inputstring</key>
+				<string>{query}</string>
+				<key>matchcasesensitive</key>
+				<false/>
+				<key>matchmode</key>
+				<integer>2</integer>
+				<key>matchstring</key>
+				<string>open .*</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.utility.filter</string>
+			<key>uid</key>
+			<string>D87FFC9C-1861-4AAE-8245-589FE804BF54</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string></string>
+	<key>uidata</key>
+	<dict>
+		<key>1CAA3DA8-26A9-4897-96E8-8A6B4A139214</key>
+		<dict>
+			<key>xpos</key>
+			<integer>1020</integer>
+			<key>ypos</key>
+			<integer>290</integer>
+		</dict>
+		<key>4665CD93-D053-4DE1-8847-F70EC798D171</key>
+		<dict>
+			<key>xpos</key>
+			<integer>830</integer>
+			<key>ypos</key>
+			<integer>290</integer>
+		</dict>
+		<key>89DB847B-6175-4F10-9325-F5666D46509F</key>
+		<dict>
+			<key>xpos</key>
+			<integer>540</integer>
+			<key>ypos</key>
+			<integer>290</integer>
+		</dict>
+		<key>D87FFC9C-1861-4AAE-8245-589FE804BF54</key>
+		<dict>
+			<key>xpos</key>
+			<integer>730</integer>
+			<key>ypos</key>
+			<integer>320</integer>
+		</dict>
+	</dict>
+	<key>webaddress</key>
+	<string>https://github.com/landicefu/Alfred-android-dev</string>
+</dict>
+</plist>
