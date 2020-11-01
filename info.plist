@@ -114,6 +114,10 @@ import urllib
 from workflow import Workflow3, web
 
 
+KOTLIN_URL_PREFIX = "https://developer.android.com/reference/kotlin/"
+NDK_URL_PREFIX = "https://developer.android.com/ndk/reference/"
+
+
 class ResultItem:
     # 2: Article
     # 3: Class
@@ -136,7 +140,16 @@ def get_search_result(wf, keyword):
     url = "https://developer.android.com/_d/search/suggestions?r=%5B%22" + urllib.quote_plus(keyword) +\
           "%22%2Cnull%2Cnull%2Cnull%2Cnull%2Ctrue%2Ctrue%2Ctrue%2Ctrue%5D"
     result = web.get(url).json()
-    return sorted([ResultItem(item) for item in result[1]], key=lambda item: item.order)
+    items = [ResultItem(item) for item in result[1]]
+    url_set = set()
+    for index in reversed(range(0, len(items))):
+        item = items[index]
+        if item.url is not None:
+            if item.url in url_set:
+                items.pop(index)
+            else:
+                url_set.add(item.url)
+    return sorted(items, key=lambda item: item.order)
 
 
 def main(wf):  # type: (Workflow3) -&gt; None
@@ -151,10 +164,16 @@ def main(wf):  # type: (Workflow3) -&gt; None
         search = " ".join(args)
         items = get_search_result(wf, search)  # type: [ResultItem]
         for item in items:
+            subtitle_suffix = ""
+            if item.url is not None:
+                if item.url.startswith(KOTLIN_URL_PREFIX):
+                    subtitle_suffix = " - Kotlin"
+                elif item.url.startswith(NDK_URL_PREFIX):
+                    subtitle_suffix = " - NDK"
             if item.type == 2:
-                wf.add_item(title=item.title, subtitle=u'Article', valid=True, arg='open ' + item.url)
+                wf.add_item(title=item.title, subtitle=u'Article' + subtitle_suffix, valid=True, arg='open ' + item.url)
             elif item.type == 3:
-                wf.add_item(title=item.title, subtitle=u'Class', valid=True, arg='open ' + item.url)
+                wf.add_item(title=item.title, subtitle=u'Class' + subtitle_suffix, valid=True, arg='open ' + item.url)
             elif item.type == 4:
                 url_encoded_search = urllib.quote_plus(item.title)
                 wf.add_item(title=item.title, subtitle=u'Keywords', valid=True, arg='open ' + "https://developer.android.com/s/results/?q=" + url_encoded_search + "&amp;hl=en")
