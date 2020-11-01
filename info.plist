@@ -150,13 +150,13 @@ def main(wf):  # type: (Workflow3) -&gt; None
     else:
         search = " ".join(args)
         items = get_search_result(wf, search)  # type: [ResultItem]
-        url_encoded_search = urllib.quote_plus(search)
         for item in items:
             if item.type == 2:
                 wf.add_item(title=item.title, subtitle=u'Article', valid=True, arg='open ' + item.url)
             elif item.type == 3:
                 wf.add_item(title=item.title, subtitle=u'Class', valid=True, arg='open ' + item.url)
             elif item.type == 4:
+                url_encoded_search = urllib.quote_plus(item.title)
                 wf.add_item(title=item.title, subtitle=u'Keywords', valid=True, arg='open ' + "https://developer.android.com/s/results/?q=" + url_encoded_search + "&amp;hl=en")
     wf.send_feedback()
 
